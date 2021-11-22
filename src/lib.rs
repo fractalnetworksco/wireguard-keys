@@ -1,3 +1,5 @@
+pub mod keys;
+
 #[cfg(test)]
 mod tests {
     #[test]
