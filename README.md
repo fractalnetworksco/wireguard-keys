@@ -8,3 +8,4 @@ Resources:
 
 [rustdoc]: https://fractalnetworks.gitlab.io/wireguard-util/doc/wireguard_util
 
+To build this, you want to run `make setup-git` because it will use your SSH keys instead of asking for git credentials (and possibly requiring 2-factor authentication).
