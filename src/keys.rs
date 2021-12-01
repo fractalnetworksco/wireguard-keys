@@ -1,4 +1,4 @@
-use rand_core::{RngCore, OsRng};
+use rand_core::{OsRng, RngCore};
 #[cfg(feature = "with-rocket")]
 use rocket::request::FromParam;
 #[cfg(feature = "with-serde")]
@@ -39,19 +39,23 @@ impl Pubkey {
         &self.0[..]
     }
 
-    pub fn from_base64(data: &str) -> Result<Self, base64::DecodeError> {
+    pub fn from_base64(data: &str) -> Result<Self, ParseError> {
         let data = base64::decode(data)?;
-        Ok(data.as_slice().into())
+        Ok(data.as_slice().try_into()?)
     }
 
-    pub fn from_base64_urlsafe(data: &str) -> Result<Self, base64::DecodeError> {
+    pub fn from_base64_urlsafe(data: &str) -> Result<Self, ParseError> {
         let data = base64::decode_config(data, base64::URL_SAFE)?;
-        Ok(data.as_slice().into())
+        Ok(data.as_slice().try_into()?)
     }
 
-    pub fn from_hex(data: &str) -> Result<Self, hex::FromHexError> {
+    pub fn from_hex(data: &str) -> Result<Self, ParseError> {
         let data = hex::decode(data)?;
-        Ok(data.as_slice().into())
+        Ok(data.as_slice().try_into()?)
+    }
+
+    pub fn to_hex(&self) -> String {
+        hex::encode(self.0)
     }
 
     pub fn parse(data: &str) -> Result<Self, ParseError> {
@@ -64,25 +68,60 @@ impl Pubkey {
     }
 }
 
-impl From<&[u8]> for Pubkey {
-    fn from(key: &[u8]) -> Self {
-        let mut data = [0; PUBKEY_LEN];
-        let len = key.len().max(PUBKEY_LEN);
-        data[0..len].copy_from_slice(&key[0..len]);
-        Pubkey(data)
+#[test]
+fn test_pubkey_parse() {
+    let pubkey = Privkey::generate().pubkey();
+    let mut pubkey_hex = pubkey.to_hex();
+    assert_eq!(Pubkey::parse(&pubkey_hex).unwrap(), pubkey);
+    let pubkey_base64 = pubkey.to_base64();
+    assert_eq!(Pubkey::parse(&pubkey_base64).unwrap(), pubkey);
+    let pubkey_base64_url = pubkey.to_base64_urlsafe();
+    assert_eq!(Pubkey::parse(&pubkey_base64_url).unwrap(), pubkey);
+}
+
+#[test]
+fn test_pubkey_parse_invalid() {
+    match Pubkey::parse("") {
+        Err(ParseError::Length) => {}
+        _ => assert!(false),
+    }
+    match Pubkey::parse("abc") {
+        Err(ParseError::Length) => {}
+        _ => assert!(false),
+    }
+}
+
+#[test]
+fn test_pubkey_from_slice() {
+    let slice = [0; 3];
+    match Pubkey::try_from(&slice[..]) {
+        Err(ParseError::Length) => {}
+        _ => assert!(false),
+    }
+    let slice = [0; PUBKEY_LEN];
+    match Pubkey::try_from(&slice[..]) {
+        Ok(pubkey) => {}
+        _ => assert!(false),
+    }
+}
+
+impl TryFrom<&[u8]> for Pubkey {
+    type Error = ParseError;
+    fn try_from(key: &[u8]) -> Result<Self, Self::Error> {
+        if key.len() != PUBKEY_LEN {
+            Err(ParseError::Length)
+        } else {
+            let mut data = [0; PUBKEY_LEN];
+            data[0..PUBKEY_LEN].copy_from_slice(&key[0..PUBKEY_LEN]);
+            Ok(Pubkey(data))
+        }
     }
 }
 
 impl TryFrom<&str> for Pubkey {
     type Error = ParseError;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        let data = base64::decode(value)?;
-        if data.len() != PUBKEY_LEN {
-            return Err(ParseError::Length);
-        }
-        let mut key = [0; PUBKEY_LEN];
-        key.copy_from_slice(&data);
-        Ok(Pubkey(key))
+        Pubkey::parse(value)
     }
 }
 
@@ -153,19 +192,19 @@ impl Privkey {
         Pubkey(public_key.to_bytes())
     }
 
-    pub fn from_base64(data: &str) -> Result<Self, base64::DecodeError> {
+    pub fn from_base64(data: &str) -> Result<Self, ParseError> {
         let data = base64::decode(data)?;
-        Ok(data.as_slice().into())
+        Ok(data.as_slice().try_into()?)
     }
 
-    pub fn from_base64_urlsafe(data: &str) -> Result<Self, base64::DecodeError> {
+    pub fn from_base64_urlsafe(data: &str) -> Result<Self, ParseError> {
         let data = base64::decode_config(data, base64::URL_SAFE)?;
-        Ok(data.as_slice().into())
+        Ok(data.as_slice().try_into()?)
     }
 
-    pub fn from_hex(data: &str) -> Result<Self, hex::FromHexError> {
+    pub fn from_hex(data: &str) -> Result<Self, ParseError> {
         let data = hex::decode(data)?;
-        Ok(data.as_slice().into())
+        Ok(data.as_slice().try_into()?)
     }
 
     pub fn parse(data: &str) -> Result<Self, ParseError> {
@@ -176,48 +215,73 @@ impl Privkey {
         };
         Ok(ret)
     }
+
+    pub fn to_hex(&self) -> String {
+        hex::encode(self.0)
+    }
 }
 
-impl From<&[u8]> for Privkey {
-    fn from(key: &[u8]) -> Self {
-        let mut data = [0; PRIVKEY_LEN];
-        let len = key.len().max(PRIVKEY_LEN);
-        data[0..len].copy_from_slice(&key[0..len]);
-        Privkey(data)
+#[test]
+fn test_privkey_parse() {
+    let privkey = Privkey::generate();
+    let mut privkey_hex = privkey.to_hex();
+    assert_eq!(Privkey::parse(&privkey_hex).unwrap(), privkey);
+    let privkey_base64 = privkey.to_base64();
+    assert_eq!(Privkey::parse(&privkey_base64).unwrap(), privkey);
+    let privkey_base64_url = privkey.to_base64_urlsafe();
+    assert_eq!(Privkey::parse(&privkey_base64_url).unwrap(), privkey);
+}
+
+#[test]
+fn test_privkey_parse_invalid() {
+    match Privkey::parse("") {
+        Err(ParseError::Length) => {}
+        _ => assert!(false),
+    }
+    match Privkey::parse("abc") {
+        Err(ParseError::Length) => {}
+        _ => assert!(false),
+    }
+}
+
+#[test]
+fn test_privkey_from_slice() {
+    let slice = [0; 3];
+    match Privkey::try_from(&slice[..]) {
+        Err(ParseError::Length) => {}
+        _ => assert!(false),
+    }
+    let slice = [0; PRIVKEY_LEN];
+    match Privkey::try_from(&slice[..]) {
+        Ok(pubkey) => {}
+        _ => assert!(false),
+    }
+}
+
+impl TryFrom<&[u8]> for Privkey {
+    type Error = ParseError;
+    fn try_from(key: &[u8]) -> Result<Self, Self::Error> {
+        if key.len() != PUBKEY_LEN {
+            Err(ParseError::Length)
+        } else {
+            let mut data = [0; PUBKEY_LEN];
+            data[0..PUBKEY_LEN].copy_from_slice(&key[0..PUBKEY_LEN]);
+            Ok(Privkey(data))
+        }
     }
 }
 
 impl TryFrom<&str> for Privkey {
     type Error = ParseError;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        // try decoding as base64
-        let data = base64::decode(value);
-
-        // if that fails, try decoding as url-safe base64
-        let data = data.or_else(|_| base64::decode_config(value, base64::URL_SAFE));
-
-        let data = data?;
-
-        // make sure the length fits
-        if data.len() != PRIVKEY_LEN {
-            return Err(ParseError::Length);
-        }
-        let mut key = [0; PRIVKEY_LEN];
-        key.copy_from_slice(&data);
-        Ok(Privkey(key))
+        Privkey::parse(value)
     }
 }
 
 impl FromStr for Privkey {
     type Err = ParseError;
     fn from_str(value: &str) -> Result<Self, Self::Err> {
-        let data = base64::decode(value)?;
-        if data.len() != PRIVKEY_LEN {
-            return Err(ParseError::Length);
-        }
-        let mut key = [0; PRIVKEY_LEN];
-        key.copy_from_slice(&data);
-        Ok(Privkey(key))
+        Privkey::parse(value)
     }
 }
 
@@ -265,19 +329,19 @@ impl Secret {
         Secret(data)
     }
 
-    pub fn from_base64(data: &str) -> Result<Self, base64::DecodeError> {
+    pub fn from_base64(data: &str) -> Result<Self, ParseError> {
         let data = base64::decode(data)?;
-        Ok(data.as_slice().into())
+        Ok(data.as_slice().try_into()?)
     }
 
-    pub fn from_base64_urlsafe(data: &str) -> Result<Self, base64::DecodeError> {
+    pub fn from_base64_urlsafe(data: &str) -> Result<Self, ParseError> {
         let data = base64::decode_config(data, base64::URL_SAFE)?;
-        Ok(data.as_slice().into())
+        Ok(data.as_slice().try_into()?)
     }
 
-    pub fn from_hex(data: &str) -> Result<Self, hex::FromHexError> {
+    pub fn from_hex(data: &str) -> Result<Self, ParseError> {
         let data = hex::decode(data)?;
-        Ok(data.as_slice().into())
+        Ok(data.as_slice().try_into()?)
     }
 
     pub fn parse(data: &str) -> Result<Self, ParseError> {
@@ -288,48 +352,73 @@ impl Secret {
         };
         Ok(ret)
     }
+
+    pub fn to_hex(&self) -> String {
+        hex::encode(self.0)
+    }
 }
 
-impl From<&[u8]> for Secret {
-    fn from(key: &[u8]) -> Self {
-        let mut data = [0; SECRET_LEN];
-        let len = key.len().max(SECRET_LEN);
-        data[0..len].copy_from_slice(&key[0..len]);
-        Secret(data)
+#[test]
+fn test_secret_parse() {
+    let secret = Secret::generate();
+    let mut secret_hex = secret.to_hex();
+    assert_eq!(Secret::parse(&secret_hex).unwrap(), secret);
+    let secret_base64 = secret.to_base64();
+    assert_eq!(Secret::parse(&secret_base64).unwrap(), secret);
+    let secret_base64_url = secret.to_base64_urlsafe();
+    assert_eq!(Secret::parse(&secret_base64_url).unwrap(), secret);
+}
+
+#[test]
+fn test_secret_parse_invalid() {
+    match Secret::parse("") {
+        Err(ParseError::Length) => {}
+        _ => assert!(false),
+    }
+    match Secret::parse("abc") {
+        Err(ParseError::Length) => {}
+        _ => assert!(false),
+    }
+}
+
+#[test]
+fn test_secret_from_slice() {
+    let slice = [0; 3];
+    match Secret::try_from(&slice[..]) {
+        Err(ParseError::Length) => {}
+        _ => assert!(false),
+    }
+    let slice = [0; PRIVKEY_LEN];
+    match Secret::try_from(&slice[..]) {
+        Ok(pubkey) => {}
+        _ => assert!(false),
+    }
+}
+
+impl TryFrom<&[u8]> for Secret {
+    type Error = ParseError;
+    fn try_from(key: &[u8]) -> Result<Self, Self::Error> {
+        if key.len() != PUBKEY_LEN {
+            Err(ParseError::Length)
+        } else {
+            let mut data = [0; PUBKEY_LEN];
+            data[0..PUBKEY_LEN].copy_from_slice(&key[0..PUBKEY_LEN]);
+            Ok(Secret(data))
+        }
     }
 }
 
 impl TryFrom<&str> for Secret {
     type Error = ParseError;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        // try decoding as base64
-        let data = base64::decode(value);
-
-        // if that fails, try decoding as url-safe base64
-        let data = data.or_else(|_| base64::decode_config(value, base64::URL_SAFE));
-
-        let data = data?;
-
-        // make sure the length fits
-        if data.len() != SECRET_LEN {
-            return Err(ParseError::Length);
-        }
-        let mut key = [0; SECRET_LEN];
-        key.copy_from_slice(&data);
-        Ok(Secret(key))
+        Secret::parse(value)
     }
 }
 
 impl FromStr for Secret {
     type Err = ParseError;
     fn from_str(value: &str) -> Result<Self, Self::Err> {
-        let data = base64::decode(value)?;
-        if data.len() != SECRET_LEN {
-            return Err(ParseError::Length);
-        }
-        let mut key = [0; SECRET_LEN];
-        key.copy_from_slice(&data);
-        Ok(Secret(key))
+        Secret::parse(value)
     }
 }
 
