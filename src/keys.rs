@@ -1,12 +1,14 @@
 use rand_core::OsRng;
-#[cfg(feature = "serde")]
-use serde_crate::{Deserialize, Serialize};
+#[cfg(feature = "with-serde")]
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use thiserror::Error;
 use x25519_dalek_fiat::{PublicKey, StaticSecret};
+#[cfg(feature = "with-rocket")]
+use rocket::request::FromParam;
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(crate="serde_crate"))]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Pubkey([u8; 32]);
 
@@ -84,6 +86,15 @@ impl TryFrom<&str> for Pubkey {
     }
 }
 
+#[cfg(feature = "with-rocket")]
+impl<'r> FromParam<'r> for Pubkey {
+    type Error = WireguardParseError;
+
+    fn from_param(param: &'r str) -> Result<Self, Self::Error> {
+        Pubkey::parse(param)
+    }
+}
+
 impl FromStr for Pubkey {
     type Err = WireguardParseError;
     fn from_str(value: &str) -> Result<Self, Self::Err> {
@@ -105,7 +116,7 @@ impl FromStr for Pubkey {
     }
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(crate="serde_crate"))]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Privkey([u8; PRIVKEY_LEN]);
 
@@ -210,6 +221,15 @@ impl FromStr for Privkey {
     }
 }
 
+#[cfg(feature = "with-rocket")]
+impl<'r> FromParam<'r> for Privkey {
+    type Error = WireguardParseError;
+
+    fn from_param(param: &'r str) -> Result<Self, Self::Error> {
+        Privkey::parse(param)
+    }
+}
+
 #[test]
 fn test_wireguard_privkey() {
     let key = Privkey::new([0; PRIVKEY_LEN]);
@@ -222,7 +242,7 @@ fn test_wireguard_privkey() {
     assert_eq!(key.pubkey(), key.pubkey());
 }
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(crate="serde_crate"))]
+#[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Secret([u8; SECRET_LEN]);
 
@@ -304,6 +324,15 @@ impl FromStr for Secret {
         let mut key = [0; SECRET_LEN];
         key.copy_from_slice(&data);
         Ok(Secret(key))
+    }
+}
+
+#[cfg(feature = "with-rocket")]
+impl<'r> FromParam<'r> for Secret {
+    type Error = WireguardParseError;
+
+    fn from_param(param: &'r str) -> Result<Self, Self::Error> {
+        Secret::parse(param)
     }
 }
 
