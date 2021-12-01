@@ -1,17 +1,21 @@
 use rand_core::OsRng;
-use serde::{Deserialize, Serialize};
+#[cfg(feature = "serde")]
+use serde_crate::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use thiserror::Error;
 use x25519_dalek_fiat::{PublicKey, StaticSecret};
 
-#[derive(Serialize, Deserialize, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(crate="serde_crate"))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Pubkey([u8; 32]);
 
 #[derive(Error, Debug)]
-pub enum WireguardFromError {
+pub enum WireguardParseError {
     #[error("base64 decoding error")]
     Base64(#[from] base64::DecodeError),
+    #[error("hex decoding errro")]
+    Hex(#[from] hex::FromHexError),
     #[error("length mismatch")]
     Length,
 }
@@ -42,6 +46,20 @@ impl Pubkey {
         let data = base64::decode_config(data, base64::URL_SAFE)?;
         Ok(data.as_slice().into())
     }
+
+    pub fn from_hex(data: &str) -> Result<Self, hex::FromHexError> {
+        let data = hex::decode(data)?;
+        Ok(data.as_slice().into())
+    }
+
+    pub fn parse(data: &str) -> Result<Self, WireguardParseError> {
+        let ret = match data.len() {
+            64 => Self::from_hex(data)?,
+            44 => Self::from_base64(data).or_else(|_| Self::from_base64_urlsafe(data))?,
+            _ => Err(WireguardParseError::Length)?,
+        };
+        Ok(ret)
+    }
 }
 
 impl From<&[u8]> for Pubkey {
@@ -54,11 +72,11 @@ impl From<&[u8]> for Pubkey {
 }
 
 impl TryFrom<&str> for Pubkey {
-    type Error = WireguardFromError;
+    type Error = WireguardParseError;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         let data = base64::decode(value)?;
         if data.len() != PUBKEY_LEN {
-            return Err(WireguardFromError::Length);
+            return Err(WireguardParseError::Length);
         }
         let mut key = [0; PUBKEY_LEN];
         key.copy_from_slice(&data);
@@ -67,7 +85,7 @@ impl TryFrom<&str> for Pubkey {
 }
 
 impl FromStr for Pubkey {
-    type Err = WireguardFromError;
+    type Err = WireguardParseError;
     fn from_str(value: &str) -> Result<Self, Self::Err> {
         // try decoding as base64
         let data = base64::decode(value);
@@ -79,7 +97,7 @@ impl FromStr for Pubkey {
 
         // make sure the length fits
         if data.len() != PUBKEY_LEN {
-            return Err(WireguardFromError::Length);
+            return Err(WireguardParseError::Length);
         }
         let mut key = [0; PUBKEY_LEN];
         key.copy_from_slice(&data);
@@ -87,7 +105,8 @@ impl FromStr for Pubkey {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(crate="serde_crate"))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Privkey([u8; PRIVKEY_LEN]);
 
 impl Privkey {
@@ -132,6 +151,20 @@ impl Privkey {
         let data = base64::decode_config(data, base64::URL_SAFE)?;
         Ok(data.as_slice().into())
     }
+
+    pub fn from_hex(data: &str) -> Result<Self, hex::FromHexError> {
+        let data = hex::decode(data)?;
+        Ok(data.as_slice().into())
+    }
+
+    pub fn parse(data: &str) -> Result<Self, WireguardParseError> {
+        let ret = match data.len() {
+            64 => Self::from_hex(data)?,
+            44 => Self::from_base64(data).or_else(|_| Self::from_base64_urlsafe(data))?,
+            _ => Err(WireguardParseError::Length)?,
+        };
+        Ok(ret)
+    }
 }
 
 impl From<&[u8]> for Privkey {
@@ -144,7 +177,7 @@ impl From<&[u8]> for Privkey {
 }
 
 impl TryFrom<&str> for Privkey {
-    type Error = WireguardFromError;
+    type Error = WireguardParseError;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         // try decoding as base64
         let data = base64::decode(value);
@@ -156,7 +189,7 @@ impl TryFrom<&str> for Privkey {
 
         // make sure the length fits
         if data.len() != PRIVKEY_LEN {
-            return Err(WireguardFromError::Length);
+            return Err(WireguardParseError::Length);
         }
         let mut key = [0; PRIVKEY_LEN];
         key.copy_from_slice(&data);
@@ -165,11 +198,11 @@ impl TryFrom<&str> for Privkey {
 }
 
 impl FromStr for Privkey {
-    type Err = WireguardFromError;
+    type Err = WireguardParseError;
     fn from_str(value: &str) -> Result<Self, Self::Err> {
         let data = base64::decode(value)?;
         if data.len() != PRIVKEY_LEN {
-            return Err(WireguardFromError::Length);
+            return Err(WireguardParseError::Length);
         }
         let mut key = [0; PRIVKEY_LEN];
         key.copy_from_slice(&data);
@@ -189,7 +222,8 @@ fn test_wireguard_privkey() {
     assert_eq!(key.pubkey(), key.pubkey());
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Hash, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(crate="serde_crate"))]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Secret([u8; SECRET_LEN]);
 
 impl Secret {
@@ -214,6 +248,20 @@ impl Secret {
         let data = base64::decode_config(data, base64::URL_SAFE)?;
         Ok(data.as_slice().into())
     }
+
+    pub fn from_hex(data: &str) -> Result<Self, hex::FromHexError> {
+        let data = hex::decode(data)?;
+        Ok(data.as_slice().into())
+    }
+
+    pub fn parse(data: &str) -> Result<Self, WireguardParseError> {
+        let ret = match data.len() {
+            64 => Self::from_hex(data)?,
+            44 => Self::from_base64(data).or_else(|_| Self::from_base64_urlsafe(data))?,
+            _ => Err(WireguardParseError::Length)?,
+        };
+        Ok(ret)
+    }
 }
 
 impl From<&[u8]> for Secret {
@@ -226,7 +274,7 @@ impl From<&[u8]> for Secret {
 }
 
 impl TryFrom<&str> for Secret {
-    type Error = WireguardFromError;
+    type Error = WireguardParseError;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         // try decoding as base64
         let data = base64::decode(value);
@@ -238,7 +286,7 @@ impl TryFrom<&str> for Secret {
 
         // make sure the length fits
         if data.len() != SECRET_LEN {
-            return Err(WireguardFromError::Length);
+            return Err(WireguardParseError::Length);
         }
         let mut key = [0; SECRET_LEN];
         key.copy_from_slice(&data);
@@ -247,11 +295,11 @@ impl TryFrom<&str> for Secret {
 }
 
 impl FromStr for Secret {
-    type Err = WireguardFromError;
+    type Err = WireguardParseError;
     fn from_str(value: &str) -> Result<Self, Self::Err> {
         let data = base64::decode(value)?;
         if data.len() != SECRET_LEN {
-            return Err(WireguardFromError::Length);
+            return Err(WireguardParseError::Length);
         }
         let mut key = [0; SECRET_LEN];
         key.copy_from_slice(&data);
