@@ -1,5 +1,5 @@
 [package]
-name = "wireguard-util"
+name = "wireguard-keys"
 version = "0.1.0"
 edition = "2021"
 
