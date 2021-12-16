@@ -3,12 +3,15 @@ use rand_core::{OsRng, RngCore};
 use rocket::request::FromParam;
 #[cfg(feature = "with-serde")]
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "with-schema")]
+use schemars::JsonSchema;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use thiserror::Error;
 use x25519_dalek_fiat::{PublicKey, StaticSecret};
 
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "with-schema", derive(JsonSchema))]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Pubkey([u8; 32]);
 
@@ -156,6 +159,7 @@ impl FromStr for Pubkey {
 }
 
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "with-schema", derive(JsonSchema))]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Privkey([u8; PRIVKEY_LEN]);
 
@@ -307,6 +311,7 @@ fn test_wireguard_privkey() {
 }
 
 #[cfg_attr(feature = "with-serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "with-schema", derive(JsonSchema))]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Secret([u8; SECRET_LEN]);
 
