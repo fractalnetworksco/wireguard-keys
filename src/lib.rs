@@ -1,10 +1,10 @@
 use rand_core::{OsRng, RngCore};
 #[cfg(feature = "rocket")]
 use rocket::request::FromParam;
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
 #[cfg(feature = "schema")]
 use schemars::JsonSchema;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use thiserror::Error;
