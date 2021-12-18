@@ -1,4 +1,4 @@
-# WireGuard Util
+# WireGuard Keys
 
 This is a utility crate containing data structures relating to WireGuard. There are
 no builds for it, but the RustDoc documentation is published on every commit.
