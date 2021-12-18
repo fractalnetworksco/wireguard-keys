@@ -7,7 +7,7 @@ macro_rules! impl_serde {
                 S: Serializer,
             {
                 if serializer.is_human_readable() {
-                    let encoded: String = self.to_base64();
+                    let encoded: String = self.to_string();
                     (&encoded).serialize(serializer)
                 } else {
                     self.0.serialize(serializer)
@@ -234,6 +234,38 @@ macro_rules! impl_deref {
             type Target = [u8; $len];
             fn deref(&self) -> &Self::Target {
                 &self.0
+            }
+        }
+    };
+}
+
+macro_rules! impl_display {
+    ($type:ty) => {
+        impl std::fmt::Display for $type {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+                #[cfg(feature = "base64")]
+                return write!(f, "{}", self.to_base64());
+                #[cfg(all(not(feature = "base64"), feature = "hex"))]
+                return write!(f, "{}", self.to_hex());
+                #[cfg(all(not(feature = "base64"), not(feature = "hex"), feature = "base32"))]
+                return write!(f, "{}", self.to_base32());
+                #[cfg(all(
+                    not(feature = "base64"),
+                    not(feature = "hex"),
+                    not(feature = "base32")
+                ))]
+                return unimplemented!();
+            }
+        }
+
+        paste! {
+            #[cfg(any(feature = "base64", feature = "hex", feature = "base32"))]
+            #[test]
+            fn [<test_ $type:lower _display>]() {
+                let value = <$type>::generate();
+                let display = value.to_string();
+                let parsed = <$type>::parse(&display).unwrap();
+                assert_eq!(value, parsed);
             }
         }
     };

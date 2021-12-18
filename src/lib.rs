@@ -12,7 +12,6 @@ use serde::{
     de::{Error, Visitor},
     Deserialize, Deserializer, Serialize, Serializer,
 };
-#[cfg(feature = "serde")]
 use std::fmt;
 use std::str::FromStr;
 use thiserror::Error;
@@ -49,6 +48,7 @@ const SECRET_LEN: usize = 32;
 pub struct Pubkey([u8; PUBKEY_LEN]);
 
 impl_new!(Pubkey, PUBKEY_LEN);
+impl_display!(Pubkey);
 impl_deref!(Pubkey, PUBKEY_LEN);
 #[cfg(feature = "hex")]
 impl_hex!(Pubkey);
@@ -103,6 +103,7 @@ impl TryFrom<&[u8]> for Pubkey {
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Zeroize)]
 pub struct Privkey([u8; PRIVKEY_LEN]);
 
+impl_display!(Privkey);
 impl_new!(Privkey, PRIVKEY_LEN);
 impl_deref!(Privkey, PRIVKEY_LEN);
 #[cfg(feature = "hex")]
@@ -189,6 +190,7 @@ fn test_wireguard_privkey() {
 pub struct Secret([u8; SECRET_LEN]);
 
 impl_new!(Secret, SECRET_LEN);
+impl_display!(Secret);
 impl_deref!(Secret, SECRET_LEN);
 #[cfg(feature = "hex")]
 impl_hex!(Secret);
