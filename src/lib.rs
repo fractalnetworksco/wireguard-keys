@@ -17,6 +17,7 @@ use std::fmt;
 use std::str::FromStr;
 use thiserror::Error;
 use x25519_dalek_fiat::{PublicKey, StaticSecret};
+use zeroize::Zeroize;
 
 #[derive(Error, Debug)]
 pub enum ParseError {
@@ -44,7 +45,7 @@ const SECRET_LEN: usize = 32;
 
 /// WireGuard public key.
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Zeroize)]
 pub struct Pubkey([u8; PUBKEY_LEN]);
 
 impl_new!(Pubkey, PUBKEY_LEN);
@@ -99,7 +100,7 @@ impl TryFrom<&[u8]> for Pubkey {
 
 /// WireGuard private key.
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Zeroize)]
 pub struct Privkey([u8; PRIVKEY_LEN]);
 
 impl_new!(Privkey, PRIVKEY_LEN);
@@ -184,7 +185,7 @@ fn test_wireguard_privkey() {
 
 /// WireGuard preshared key.
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
-#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Zeroize)]
 pub struct Secret([u8; SECRET_LEN]);
 
 impl_new!(Secret, SECRET_LEN);
