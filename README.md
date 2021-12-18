@@ -12,9 +12,12 @@ To build this, you want to run `make setup-git` because it will use your SSH key
 
 ## Features
 
-By default, this crate only provides types for WireGuard keys (pubkey, privkey, secret).
+By default, this crate only provides types for WireGuard keys (Pubkey, Privkey, Secret).
 These optional features can be enabled:
 
-- `serde`: add serialization and deserialization capabilities.
-- `rocket`: add the ability to parse WireGuard keys from HTTP requests in Rocket.
-- `schema`: add the ability to generate JSON schemas from the types.
+- `serde`: serialization and deserialization capabilities (enabled by default).
+- `hex`: convert to and from hex (enabled by default).
+- `base64`: convert to and from base64 (enabled by default).
+- `base32`: convert to and from base32.
+- `rocket`: ability to parse WireGuard keys from HTTP requests in Rocket.
+- `schema`: ability to generate JSON schemas from the types.
