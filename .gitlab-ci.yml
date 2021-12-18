@@ -35,14 +35,14 @@ test:
   image: registry.gitlab.com/fractalnetworks/images/rust:stable
   stage: test
   script:
-    - cargo test
+    - cargo test --all-features
 
 # generate rust html documentation
 rustdoc:
   image: registry.gitlab.com/fractalnetworks/images/rust:stable
   stage: build
   script:
-    - cargo doc
+    - cargo doc --all-features
   artifacts:
     paths:
       - target/doc
