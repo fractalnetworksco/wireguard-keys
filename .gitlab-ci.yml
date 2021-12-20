@@ -42,7 +42,7 @@ rustdoc:
   image: registry.gitlab.com/fractalnetworks/images/rust:stable
   stage: build
   script:
-    - cargo doc --all-features
+    - cargo doc --all-features --no-deps
   artifacts:
     paths:
       - target/doc
