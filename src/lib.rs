@@ -1,3 +1,29 @@
+//! This crate allows for working with WireGuard keys. WireGuard uses asymmetric x25519 keys,
+//! which are represented by the [Privkey] and [Pubkey] types respectively. Private keys can
+//! be generated randomly, and their corresponding public key can be derived. Additionally,
+//! WireGuard allows using a preshared key as additional security layer, which is just a random
+//! 256-bit value. This is represented by the [Secret] type.
+//!
+//! For security reasons, this crate uses the [Zeroize] trait to mark all types containing
+//! cryyptographically relevant information to be cleared on drop. The [x25519_dalek_fiat]
+//! crate is used for x25519 operations.
+//!
+//! This crate allows for encoding keys in various ways. The crate supports `base64`, which is
+//! typically used by WireGuard, but `hex` and `base32` can be enabled as well. Enabling encodings
+//! also enables parsing from that encoding.
+//!
+//! The [serde] feature, which is enabled by default, adds [serialize][serde::Serialize] and
+//! [deserialize][serde::Deserialize] support for WireGuard types. How these types are serialized
+//! depends on the format: when serializing into human-readable formats, such as
+//! JSON, the keys are serialized as base64-encoded strings. However, when
+//! serializing to binary formats such as Bincode, keys are serialized as raw bytes.
+//!
+//! The optional `schema` feature adds information to the types allowing to generate JSON schema
+//! from them automatically using schemars.
+//!
+//! Enabling the `rocket` feature adds the ability to parse any WireGuard types from a HTTP
+//! request using the [FromParam][rocket::request::FromParam] trait.
+
 #[macro_use]
 mod macros;
 
@@ -18,29 +44,34 @@ use thiserror::Error;
 use x25519_dalek_fiat::{PublicKey, StaticSecret};
 use zeroize::Zeroize;
 
+/// Possible errors that can be generated when parsing WireGuard keys.
 #[derive(Error, Debug)]
 pub enum ParseError {
+    /// Error decoding base64
     #[cfg(feature = "base64")]
     #[error("base64 decoding error")]
     Base64(#[from] base64::DecodeError),
+    /// Error decoding hex
     #[cfg(feature = "hex")]
     #[error("hex decoding errro")]
     Hex(#[from] hex::FromHexError),
+    /// Error decoding base32
     #[cfg(feature = "base32")]
     #[error("base32 decoding error")]
     Base32Error,
+    /// Illegal length
     #[error("length mismatch")]
     Length,
 }
 
 /// Length (in bytes) of a WireGuard public key (ed25519).
-const PUBKEY_LEN: usize = 32;
+pub const PUBKEY_LEN: usize = 32;
 
 /// Length (in bytes) of a WireGuard private key (ed25519).
-const PRIVKEY_LEN: usize = 32;
+pub const PRIVKEY_LEN: usize = 32;
 
 /// Length (in bytes) of a WireGuard preshared key.
-const SECRET_LEN: usize = 32;
+pub const SECRET_LEN: usize = 32;
 
 /// WireGuard public key.
 #[cfg_attr(feature = "schema", derive(JsonSchema))]
@@ -57,10 +88,8 @@ impl_base64!(Pubkey);
 #[cfg(feature = "base32")]
 impl_base32!(Pubkey);
 impl_parse!(Pubkey);
-
 #[cfg(feature = "serde")]
 impl_serde!(Pubkey, "WireGuard public key");
-
 #[cfg(feature = "rocket")]
 impl_rocket!(Pubkey);
 
@@ -113,10 +142,8 @@ impl_base64!(Privkey);
 #[cfg(feature = "base32")]
 impl_base32!(Privkey);
 impl_parse!(Privkey);
-
 #[cfg(feature = "serde")]
 impl_serde!(Privkey, "WireGuard private key");
-
 #[cfg(feature = "rocket")]
 impl_rocket!(Privkey);
 
@@ -199,10 +226,8 @@ impl_base64!(Secret);
 #[cfg(feature = "base32")]
 impl_base32!(Secret);
 impl_parse!(Secret);
-
 #[cfg(feature = "serde")]
 impl_serde!(Secret, "WireGuard preshared key");
-
 #[cfg(feature = "rocket")]
 impl_rocket!(Secret);
 
