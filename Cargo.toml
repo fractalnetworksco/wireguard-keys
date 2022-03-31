@@ -3,7 +3,7 @@ name = "wireguard-keys"
 version = "0.1.0"
 edition = "2021"
 description = "Generate, parse and export WireGuard (ed25519) keys."
-license = "AGPL"
+license = "AGPL-3.0-only"
 authors = ["Patrick Elsen <patrick@ether.ai>"]
 repository = "https://gitlab.com/fractalnetworks/wireguard-keys"
 
