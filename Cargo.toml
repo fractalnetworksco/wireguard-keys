@@ -1,6 +1,6 @@
 [package]
 name = "wireguard-keys"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Generate, parse and export WireGuard (x25519) keys."
 license = "AGPL-3.0-only"
