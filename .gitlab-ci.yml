@@ -18,28 +18,28 @@ stages:
   - deploy
 
 rustfmt:
-  image: registry.gitlab.com/fractalnetworks/images/rust:stable
+  image: registry.gitlab.com/fractalnetworks/images/rust-stable:v1
   stage: test
   allow_failure: true
   script:
     - cargo fmt -- --check
 
 clippy:
-  image: registry.gitlab.com/fractalnetworks/images/rust:stable
+  image: registry.gitlab.com/fractalnetworks/images/rust-stable:v1
   stage: test
   allow_failure: true
   script:
     - cargo clippy
 
 test:
-  image: registry.gitlab.com/fractalnetworks/images/rust:stable
+  image: registry.gitlab.com/fractalnetworks/images/rust-stable:v1
   stage: test
   script:
     - cargo test --all-features
 
 # generate rust html documentation
 rustdoc:
-  image: registry.gitlab.com/fractalnetworks/images/rust:stable
+  image: registry.gitlab.com/fractalnetworks/images/rust-stable:v1
   stage: build
   script:
     - cargo doc --all-features --no-deps
