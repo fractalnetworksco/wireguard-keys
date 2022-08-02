@@ -9,8 +9,6 @@ cache:
 before_script:
   - export CARGO_HOME="${PWD}/.cargo"
   - export SCCACHE_DIR="${PWD}/.cache/sccache"
-  - git config --global credential.helper store
-  - echo "https://gitlab-deploy-token:$CI_DEPLOY_TOKEN@gitlab.com" >> ~/.git-credentials
 
 stages:
   - test

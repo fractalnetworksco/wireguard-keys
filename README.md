@@ -1,16 +1,15 @@
 # WireGuard Keys
 
-This is a utility crate containing data structures relating to WireGuard. There are
-no builds for it, but the RustDoc documentation is published on every commit.
+This is a utility crate for parsing, encoding and generating x25519 keys that are used by WireGuard.
+It exports custom types that can be used to store any of these keys, and it has an integration with
+`serde` to be able to serialize and deserialize them.
 
 Resources:
-- [Source Documentation][rustdoc]
+- [Documentation (main branch)][rustdoc]
+- [Documentation (latest release)][docs]
 
-To build this, you want to run `make setup-git` because it will use your SSH keys instead of asking for git credentials (and possibly requiring 2-factor authentication).
+## Optional Features
 
-## Features
-
-By default, this crate only provides types for WireGuard keys (Pubkey, Privkey, Secret).
 These optional features can be enabled:
 
 - `serde`: serialization and deserialization capabilities (enabled by default).
@@ -21,3 +20,4 @@ These optional features can be enabled:
 - `schema`: ability to generate JSON schemas from the types.
 
 [rustdoc]: https://fractalnetworks.gitlab.io/wireguard-keys/doc/wireguard_keys
+[docs]: https://docs.rs
