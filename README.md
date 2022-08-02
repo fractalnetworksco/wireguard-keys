@@ -9,7 +9,7 @@ to encode and parse WireGuard keys (such as reading them from JSON documents).
 
 Resources:
 - Documentation: [nightly][rustdoc], [latest release][docs]
-- Crates.io [wireguard-keys][cratesio]
+- Crates.io: [wireguard-keys][cratesio]
 
 ## Example code
 
@@ -56,5 +56,5 @@ These optional features can be enabled:
 - `schema`: ability to generate JSON schemas from the types.
 
 [rustdoc]: https://fractalnetworks.gitlab.io/libraries/wireguard-keys/doc/wireguard_keys
-[docs]: https://docs.rs
+[docs]: https://docs.rs/wireguard-keys
 [cratesio]: https://crates.io/crates/wireguard-keys
