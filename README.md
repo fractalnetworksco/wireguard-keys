@@ -16,8 +16,6 @@ Resources:
 Generating private and public x25519 keys, and preshared keys for use with WireGuard.
 
 ```rust
-use wireguard_keys::{Privkey, Pubkey};
-
 // generate private key
 let privkey = Privkey::generate();
 
@@ -31,13 +29,19 @@ let secret = Secret::generate();
 Encoding and parsing keys.
 
 ```rust
-use wireguard_keys::{Privkey, Pubkey};
-
 // can export.
 Privkey::generate().to_string() // => "INBg4AAN7tRyXTyXMEYFP93oBWfRYvH5oty03+H32nY="
 
 // can parse
 let privkey = Privkey::from_str("INBg4AAN7tRyXTyXMEYFP93oBWfRYvH5oty03+H32nY=").unwrap();
+```
+
+## Usage
+
+To use this crate, simply add this line to your dependencies section in your crate configuration:
+
+```
+wireguard-keys = "0.1"
 ```
 
 ## Optional features
