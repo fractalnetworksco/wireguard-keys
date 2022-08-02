@@ -5,7 +5,7 @@ edition = "2021"
 description = "Generate, parse and export WireGuard (x25519) keys."
 license = "AGPL-3.0-only"
 authors = ["Patrick Elsen <patrick@ether.ai>"]
-repository = "https://gitlab.com/fractalnetworks/wireguard-keys"
+repository = "https://github.com/fractalnetworksco/wireguard-keys"
 
 [dependencies]
 serde = { version = "1.0.0", optional = true }
